@@ -69,10 +69,13 @@
   .pbar .nm { font:400 .6rem 'Press Start 2P','Courier New',monospace; color:var(--yellow); }
   .cwrap { position:relative; width:min(96vw,calc((100vh - 90px)*360/520)); aspect-ratio:360/520; border:4px solid var(--cyan); box-shadow:0 0 22px rgba(61,245,255,.5); background:#0b0a2a; touch-action:none; }
   #gcv { width:100%; height:100%; display:block; image-rendering:pixelated; touch-action:none; }
-  #opw { position:absolute; top:6px; right:6px; width:34%; aspect-ratio:360/520; border:3px solid var(--pink); background:#000; display:none; z-index:6; box-shadow:0 0 12px rgba(255,79,163,.7); }
-  #opw video { width:100%; height:100%; display:block; object-fit:cover; }
-  #opw .tag { position:absolute; left:0; right:0; bottom:0; font:400 .4rem/1.8 'Press Start 2P','Courier New',monospace; background:rgba(0,0,0,.65); color:var(--pink); }
-  #opw.big { width:88%; right:6%; top:10%; }
+  .float { position:absolute; width:24%; aspect-ratio:360/520; border:3px solid var(--pink); background:#000; display:none; z-index:6; box-shadow:0 0 12px rgba(255,79,163,.7); transition:width .25s,height .25s,box-shadow .25s; touch-action:none; }
+  .float video { width:100%; height:100%; display:block; object-fit:cover; }
+  .float .tag { position:absolute; left:0; right:0; bottom:0; font:400 .38rem/1.8 'Press Start 2P','Courier New',monospace; background:rgba(0,0,0,.65); color:var(--pink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .float.big { width:72%; box-shadow:0 0 22px rgba(255,79,163,.9); z-index:7; }
+  #opw { top:6px; right:6px; }
+  #camWin { position:fixed; top:66px; left:6px; width:30vw; z-index:160; border-color:var(--cyan); box-shadow:0 0 12px rgba(61,245,255,.7); }
+  #camWin.big { width:80vw; box-shadow:0 0 22px rgba(61,245,255,.9); }
   #gov { position:absolute; inset:0; z-index:8; display:none; flex-direction:column; align-items:center; justify-content:center; background:rgba(8,6,32,.82); padding:14px; text-align:center; gap:10px; }
   #gov.show { display:flex; }
   #gov .big { font:400 1.1rem/1.6 'Press Start 2P','Courier New',monospace; color:var(--yellow); text-shadow:3px 3px 0 #7a4a00; }
@@ -122,6 +125,7 @@
 <body>
 <canvas id="bg"></canvas><canvas id="fx"></canvas><div class="crt"></div>
 <div id="toast"></div>
+<div id="camWin" class="float"><video id="camv" autoplay playsinline muted></video><div class="tag" id="camTag">PARTNER CAM</div></div>
 <audio id="remoteAud" autoplay playsinline></audio>
 <input type="file" id="fileIn" accept="audio/*" multiple style="display:none">
 
@@ -143,7 +147,7 @@
   <div class="topbar">
     <div class="brand">RAJ ♥ SIYA<br>ARCADE</div>
     <div class="pstat" id="pstat">⚪ OFFLINE</div>
-    <button class="ibtn" id="micBtn" title="Talk">🎤</button><button class="ibtn" id="musicBtn" title="Music">🎵</button>
+    <button class="ibtn" id="micBtn" title="Talk">🎤</button><button class="ibtn" id="camBtn" title="Camera">🎥</button><button class="ibtn" id="musicBtn" title="Music">🎵</button>
   </div>
   <div class="love off" id="loveCard">
     <div class="lh">💞</div>
@@ -170,10 +174,10 @@
 
 <!-- PLAY -->
 <section class="scr" id="sPlay">
-  <div class="pbar"><button class="ibtn" id="pQuit" style="width:36px;height:36px;font-size:1rem">✕</button><div class="nm" id="pName">GAME</div><span style="display:flex;gap:6px"><button class="ibtn" id="pMic" style="width:36px;height:36px;font-size:1rem">🎤</button><button class="ibtn" id="pMusic" style="width:36px;height:36px;font-size:1rem">🎵</button></span></div>
+  <div class="pbar"><button class="ibtn" id="pQuit" style="width:36px;height:36px;font-size:1rem">✕</button><div class="nm" id="pName">GAME</div><span style="display:flex;gap:6px"><button class="ibtn" id="pMic" style="width:36px;height:36px;font-size:1rem">🎤</button><button class="ibtn" id="pCam" style="width:36px;height:36px;font-size:1rem">🎥</button><button class="ibtn" id="pMusic" style="width:36px;height:36px;font-size:1rem">🎵</button></span></div>
   <div class="cwrap" id="cwrap">
     <canvas id="gcv" width="360" height="520"></canvas>
-    <div id="opw"><video id="opv" autoplay playsinline muted></video><div class="tag" id="opTag">PARTNER</div></div>
+    <div id="opw" class="float"><video id="opv" autoplay playsinline muted></video><div class="tag" id="opTag">PARTNER</div></div>
     <div id="count"></div>
     <div id="gov"></div>
   </div>
@@ -219,7 +223,7 @@
     <button class="px sm cy" id="mPrev">⏮</button><button class="px sm cy" id="mPlay">⏯</button><button class="px sm cy" id="mNext">⏭</button>
   </div>
   <div class="row"><span>🔈</span><input type="range" id="mVol" min="0" max="100" value="70"><span>🔊</span></div>
-  <div class="row"><button class="px sm" id="mMic" style="width:100%">🎤 MIC</button></div>
+  <div class="row"><button class="px sm" id="mMic" style="width:48%">🎤 MIC</button><button class="px sm" id="mCam" style="width:48%">🎥 CAMERA</button></div>
   <div class="row"><button class="px sm gr" id="mShare">📡 SHARING: ON</button><button class="px sm" id="mMute">🎧 PARTNER MUSIC: ON</button></div>
   <div class="hint" id="mHint" style="margin:0"></div>
   <div id="plist"></div>
@@ -350,17 +354,28 @@ async function unpack(s) {
 }
 function dropP2P() {
   Net.p2p = false; Net.gotVideo = false; try { Net.dc && Net.dc.close(); } catch (e) {} try { Net.pc && Net.pc.close(); } catch (e) {}
-  Net.dc = Net.pc = null; if (H._video) H._video();
+  Net.dc = Net.pc = null; Net.sendScreen = Net.sendCam = Net.sendAudio = null; PartnerCam.on = false; if (H._video) H._video(); if (H._camvid) H._camvid();
 }
+/* three fixed media slots, same order on both ends: 0 = your gameplay screen, 1 = your own camera (off until you turn it on), 2 = music + mic audio */
+const ROLES = ['screen', 'cam', 'audio'];
+const Cam = { stream: null, on: false };
+function camTrack() { return Cam.stream ? Cam.stream.getVideoTracks()[0] : null; }
 function vtrack() { try { return $('gcv').captureStream(30).getVideoTracks()[0] || null; } catch (e) { return null; } }
 function atrack() { return Mus.dest ? Mus.dest.stream.getAudioTracks()[0] : null; }
 function attachTracks(pc) {
-  const vt = vtrack(), at = atrack();
-  pc.getTransceivers().forEach(t => {
-    const k = t.receiver.track.kind; try { t.direction = 'sendrecv'; } catch (e) {}
-    const tr = k === 'video' ? vt : at; if (tr) t.sender.replaceTrack(tr).catch(() => {});
-  });
+  const want = [vtrack(), camTrack(), atrack()];
+  pc.getTransceivers().forEach((t, i) => { try { t.direction = 'sendrecv'; } catch (e) {} if (i === 0) Net.sendScreen = t.sender; if (i === 1) Net.sendCam = t.sender; if (i === 2) Net.sendAudio = t.sender; t.sender.replaceTrack(want[i] || null).catch(() => {}); });
 }
+async function camToggle() {
+  if (Cam.stream) { Cam.stream.getTracks().forEach(tr => tr.stop()); Cam.stream = null; Cam.on = false; if (Net.sendCam) Net.sendCam.replaceTrack(null).catch(() => {}); tx({ t: 'cam', on: false }); renderMus(); return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } }, audio: false });
+    Cam.stream = st; Cam.on = true; if (Net.sendCam) Net.sendCam.replaceTrack(st.getVideoTracks()[0]).catch(() => {});
+    tx({ t: 'cam', on: true }); renderMus(); toast(Net.p2p ? '📷 Camera on — ' + NAME[other()] + ' can see you' : '📷 Camera on (waiting for the live link)');
+  } catch (e) { toast('Camera blocked — allow it in your browser settings'); }
+}
+const PartnerCam = { on: false };
+H.cam = m => { PartnerCam.on = m.on; if (H._camvid) H._camvid(); };
 function makePC() {
   const pc = new RTCPeerConnection(ICE); Net.pc = pc;
   pc.onconnectionstatechange = () => {
@@ -368,8 +383,9 @@ function makePC() {
     if (pc.connectionState === 'failed' || pc.connectionState === 'closed') { dropP2P(); }
   };
   pc.ontrack = e => {
-    const st = new MediaStream([e.track]);
-    if (e.track.kind === 'video') { $('opv').srcObject = st; $('opv').play().catch(() => {}); Net.gotVideo = true; if (H._video) H._video(); }
+    const idx = pc.getTransceivers().indexOf(e.transceiver), role = ROLES[idx] || e.track.kind, st = new MediaStream([e.track]);
+    if (role === 'screen') { $('opv').srcObject = st; $('opv').play().catch(() => {}); Net.gotVideo = true; if (H._video) H._video(); }
+    else if (role === 'cam') { $('camv').srcObject = st; $('camv').play().catch(() => {}); if (H._camvid) H._camvid(); }
     else { $('remoteAud').srcObject = st; $('remoteAud').play().catch(() => {}); }
   };
   pc.ondatachannel = e => bindDC(e.channel);
@@ -377,7 +393,7 @@ function makePC() {
 }
 function bindDC(dc) {
   Net.dc = dc;
-  dc.onopen = () => { Net.p2p = true; Net.lastSeen = Date.now(); toast('💞 Connected live with ' + NAME[other()]); if (H._video) H._video(); };
+  dc.onopen = () => { Net.p2p = true; Net.lastSeen = Date.now(); toast('💞 Connected live with ' + NAME[other()]); if (H._video) H._video(); if (Cam.on) tx({ t: 'cam', on: true }); };
   dc.onclose = () => { if (Net.dc === dc) { Net.p2p = false; Net.dc = null; } };
   dc.onmessage = e => { try { gotMsg(JSON.parse(e.data)); } catch (x) {} };
 }
@@ -401,7 +417,7 @@ async function startOffer() {
   try {
     dropP2P(); const pc = makePC(), att = Math.random().toString(36).slice(2, 7); Net.att = att;
     bindDC(pc.createDataChannel('g'));
-    pc.addTransceiver('video', { direction: 'sendrecv' }); pc.addTransceiver('audio', { direction: 'sendrecv' });
+    pc.addTransceiver('video', { direction: 'sendrecv' }); pc.addTransceiver('video', { direction: 'sendrecv' }); pc.addTransceiver('audio', { direction: 'sendrecv' });
     attachTracks(pc);
     await pc.setLocalDescription(await pc.createOffer()); await iceDone(pc);
     sendSig('offer', pc.localDescription, att);
@@ -454,6 +470,8 @@ function renderMus() {
   $('mHint').textContent = Net.p2p ? '💞 Live link is on — ' + NAME[other()] + ' can hear your music & voice.' : '⚠ No live link yet, so ' + NAME[other()] + ' cannot hear you. It connects when you are both online.';
   [$('micBtn'), $('pMic'), $('mMic')].forEach(b => { if (b) { b.classList.toggle('micon', !!Mus.mic); } }); $('micBtn').textContent = Mus.mic ? '🎙️' : '🎤'; $('pMic').textContent = Mus.mic ? '🎙️' : '🎤';
   $('mMic').textContent = Mus.mic ? '🎙️ MIC: ON — TAP TO MUTE' : '🎤 MIC: OFF — TAP TO TALK';
+  [$('camBtn'), $('pCam'), $('mCam')].forEach(b => { if (b) b.classList.toggle('micon', Cam.on); }); $('camBtn').textContent = Cam.on ? '📷' : '🎥'; $('pCam').textContent = Cam.on ? '📷' : '🎥';
+  $('mCam').textContent = Cam.on ? '📷 CAMERA: ON — TAP TO STOP' : '🎥 CAMERA: OFF — TAP TO SHOW YOURSELF';
 }
 H.song = m => { $('mthem').textContent = '🎧 ' + NAME[other()] + ' is playing: ' + m.title; toast('🎧 ' + NAME[other()] + ': ' + m.title); };
 async function micToggle() {
@@ -643,24 +661,6 @@ reg('memory', 'Memory Match', '🃏', 'Flip cards and find all the pairs.', 'sco
   };
 });
 
-reg('g2048', '2048', '🔢', 'Swipe to merge tiles. Chase the big numbers.', 'score', 45, E => {
-  const g = E.g; let b = Array.from({ length: 4 }, () => [0, 0, 0, 0]), sx = 0, sy = 0, dead = 0;
-  const add = () => { const e = []; b.forEach((r, i) => r.forEach((v, j) => !v && e.push([i, j]))); if (!e.length) return; const [i, j] = e[E.ri(0, e.length - 1)]; b[i][j] = E.rnd() < .9 ? 2 : 4; };
-  add(); add();
-  const slide = r => { let a = r.filter(v => v), pts = 0; for (let i = 0; i < a.length - 1; i++) if (a[i] === a[i + 1]) { a[i] *= 2; pts += a[i]; a.splice(i + 1, 1); } while (a.length < 4) a.push(0); return [a, pts]; };
-  const mv = d => {
-    let moved = false, pts = 0; const nb = b.map(r => r.slice());
-    for (let k = 0; k < 4; k++) { let line = d < 2 ? nb[k].slice() : nb.map(r => r[k]); if (d === 1 || d === 3) line.reverse(); let [a, p] = slide(line); pts += p; if (d === 1 || d === 3) a.reverse(); for (let m = 0; m < 4; m++) { const v = a[m]; if (d < 2) nb[k][m] = v; else nb[m][k] = v; } }
-    if (JSON.stringify(nb) !== JSON.stringify(b)) { b = nb; moved = true; E.add(pts); add(); E.s(pts ? 'coin' : 'tap'); }
-    if (!b.some(r => r.some(v => !v)) && ![0, 1, 2, 3].some(d2 => { const sv = b.map(r => r.slice()); let ch = false; for (let k = 0; k < 4; k++) { let line = d2 < 2 ? sv[k].slice() : sv.map(r => r[k]); if (d2 === 1 || d2 === 3) line.reverse(); const [a] = slide(line); if (a.join() !== line.join()) ch = true; } return ch; })) { E.s('hit'); E.over(); }
-  };
-  const C = { 0: '#2a2060', 2: '#eee4da', 4: '#ede0c8', 8: '#f2b179', 16: '#f59563', 32: '#f67c5f', 64: '#f65e3b', 128: '#edcf72', 256: '#edcc61', 512: '#edc850', 1024: '#edc53f', 2048: '#edc22e' };
-  return {
-    step() {}, draw() { BG(g, '#1a1248', '#2a1a5a'); R(g, 14, 120, 332, 332, '#120c33'); b.forEach((r, i) => r.forEach((v, j) => { R(g, 20 + j * 82, 126 + i * 82, 76, 76, C[v] || '#3c3a32'); if (v) T(g, v, 58 + j * 82, 164 + i * 82, v > 999 ? 14 : v > 99 ? 18 : 22, v > 4 ? '#fff' : '#6b5d4f'); })); T(g, 'SWIPE', 180, 480, 10, '#9487b3'); },
-    pd(x, y) { sx = x; sy = y; }, pu(x, y) { const dx = x - sx, dy = y - sy; if (Math.hypot(dx, dy) < 24) return; if (Math.abs(dx) > Math.abs(dy)) mv(dx < 0 ? 0 : 1); else mv(dy < 0 ? 2 : 3); }
-  };
-});
-
 reg('stack', 'Stack', '🏗️', 'Tap to drop the block. Land it perfectly to build high.', 'score', 45, E => {
   const g = E.g; let L = [{ x: 100, w: 160 }], cx = 0, cw = 160, dir = 1, n = 0;
   return {
@@ -766,15 +766,6 @@ reg('eggs', 'Egg Catcher', '🧺', 'Drag the basket. Catch eggs, dodge the bombs
       it.forEach(i => i.y += i.v); it = it.filter(i => { if (i.y > 455 && i.y < 495 && Math.abs(i.x - bx) < 44) { if (i.k === 'b') { E.set(Math.max(0, E.score() - 3)); E.s('boom'); } else { E.add(i.k === 'g' ? 5 : 1); E.s(i.k === 'g' ? 'coin' : 'pop'); } return false; } return i.y < 540; }); },
     draw() { BG(g, '#ffe9b8', '#ffc98a'); R(g, 0, 500, 360, 20, '#7a4a1a'); it.forEach(i => EM(g, i.k === 'b' ? '💣' : i.k === 'g' ? '🥇' : '🥚', i.x, i.y, 34)); EM(g, '🧺', bx, 478, 62); },
     pd(x) { tx = clamp(x, 30, 330); }, pm(x) { tx = clamp(x, 30, 330); }
-  };
-});
-
-reg('slide', 'Sliding Puzzle', '🔲', 'Slide the tiles into order, 1 to 8.', 'score', 60, E => {
-  const g = E.g; let b = [], bl = 8;
-  const newP = () => { b = [1, 2, 3, 4, 5, 6, 7, 8, 0]; bl = 8; let prev = -1; for (let k = 0; k < 60; k++) { const nb = [bl - 3, bl + 3, bl % 3 ? bl - 1 : -1, bl % 3 < 2 ? bl + 1 : -1].filter(n => n >= 0 && n < 9 && n !== prev); const n = nb[E.ri(0, nb.length - 1)]; b[bl] = b[n]; b[n] = 0; prev = bl; bl = n; } if (b.join() === '1,2,3,4,5,6,7,8,0') newP(); }; newP();
-  return {
-    step() {}, draw() { BG(g, '#0e0b26', '#1a1248'); b.forEach((v, i) => { if (!v) return; R(g, 20 + (i % 3) * 112, 130 + Math.floor(i / 3) * 112, 106, 106, '#7b4dff'); T(g, v, 73 + (i % 3) * 112, 183 + Math.floor(i / 3) * 112, 28, '#fff'); }); T(g, 'SOLVED: ' + E.score(), 180, 80, 11, '#fff'); },
-    pd(x, y) { const j = Math.floor((x - 20) / 112), i = Math.floor((y - 130) / 112); if (i < 0 || i > 2 || j < 0 || j > 2) return; const n = i * 3 + j; if (Math.abs(n - bl) === 3 || (Math.abs(n - bl) === 1 && Math.floor(n / 3) === Math.floor(bl / 3))) { b[bl] = b[n]; b[n] = 0; bl = n; E.s('tap'); if (b.join() === '1,2,3,4,5,6,7,8,0') { E.add(1); E.s('coin'); newP(); } } }
   };
 });
 
@@ -951,29 +942,29 @@ reg('temple', 'Temple Run', '🏃', 'Swipe ◀ ▶ to change lane · ▲ to jump
 });
 
 /* ---------------- LUDO ---------------- */
-reg('ludo', 'Ludo', '🎲', 'Roll the dice, race both tokens home, capture rivals. A 6 lets a token out!', 'duel', 0, E => {
+reg('ludo', 'Ludo', '🎲', 'Roll the dice, race all 4 tokens home, capture rivals. A 6 lets a token out!', 'duel', 0, E => {
   const g = E.g, C = 24, PATH = [], ad = (c, r) => PATH.push([c, r]);
   for (let c = 1; c <= 5; c++) ad(c, 6); for (let r = 5; r >= 0; r--) ad(6, r); ad(7, 0); ad(8, 0); for (let r = 1; r <= 5; r++) ad(8, r); for (let c = 9; c <= 14; c++) ad(c, 6); ad(14, 7); ad(14, 8);
   for (let c = 13; c >= 9; c--) ad(c, 8); for (let r = 9; r <= 14; r++) ad(8, r); ad(7, 14); ad(6, 14); for (let r = 13; r >= 9; r--) ad(6, r); for (let c = 5; c >= 0; c--) ad(c, 8); ad(0, 7); ad(0, 6);
-  const START = [0, 26], HOME = [[[1, 7], [2, 7], [3, 7], [4, 7], [5, 7]], [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7]]], BASE = [[[2, 2], [3, 3]], [[12, 12], [11, 11]]], SAFE = [0, 8, 13, 21, 26, 34, 39, 47], COL = ['#e0463a', '#f2c230'], LT = ['#ff9a8f', '#ffe27a'];
-  const me = E.first === E.me ? 0 : 1, CAP = 30; const tok = [[-1, -1], [-1, -1]]; let turn = 0, ph = 'roll', rv = 1, rolls = 0, f = 0, wait = 0, anim = 0, res = null, endAt = 0, legal = [], autoT = 0, msg = '';
-  const cell = (p, s, t) => s < 0 ? BASE[p][t] : s <= 50 ? PATH[(START[p] + s) % 52] : s <= 55 ? HOME[p][s - 51] : [p ? 8 : 6, 7 + (t ? .28 : -.28)];
-  const legalMoves = p => [0, 1].filter(t => tok[p][t] < 0 ? rv === 6 : tok[p][t] + rv <= 56);
+  const START = [0, 26], HOME = [[[1, 7], [2, 7], [3, 7], [4, 7], [5, 7]], [[13, 7], [12, 7], [11, 7], [10, 7], [9, 7]]], BASE = [[[2, 2], [3, 2], [2, 3], [3, 3]], [[11, 11], [12, 11], [11, 12], [12, 12]]], SAFE = [0, 8, 13, 21, 26, 34, 39, 47], COL = ['#e0463a', '#f2c230'], LT = ['#ff9a8f', '#ffe27a'];
+  const me = E.first === E.me ? 0 : 1, CAP = 44; const tok = [[-1, -1, -1, -1], [-1, -1, -1, -1]]; let turn = 0, ph = 'roll', rv = 1, rolls = 0, f = 0, wait = 0, anim = 0, res = null, endAt = 0, legal = [], autoT = 0, msg = '';
+  const cell = (p, s, t) => s < 0 ? BASE[p][t] : s <= 50 ? PATH[(START[p] + s) % 52] : s <= 55 ? HOME[p][s - 51] : [p ? 8 : 6, 7 + (t - 1.5) * .22];
+  const legalMoves = p => [0, 1, 2, 3].filter(t => tok[p][t] < 0 ? rv === 6 : tok[p][t] + rv <= 56);
   const prog = p => tok[p].reduce((a, s) => a + Math.max(s, 0), 0);
   const check = () => { if (res) return true; for (const p of [0, 1]) if (tok[p].every(s => s === 56)) { res = p === me ? 'win' : 'lose'; endAt = f + 70; E.s(res); return true; }
     if (rolls >= CAP && ph === 'roll') { const a = prog(me), b = prog(1 - me); res = a > b ? 'win' : a < b ? 'lose' : 'draw'; endAt = f + 70; E.s(res === 'draw' ? 'tap' : res); return true; } return false; };
   const roll = v => { rv = v; rolls++; anim = 18; E.s('tick'); ph = 'move'; legal = legalMoves(turn); autoT = 0;
     if (!legal.length) { ph = 'pass'; wait = 60; } else if (turn === me) { if (legal.length === 1) autoT = 40; } else if (E.solo) autoT = 45; };
   const move = t => { const p = turn, s = tok[p][t], ns = s < 0 ? 0 : s + rv; tok[p][t] = ns; let cap = false;
-    if (ns >= 0 && ns <= 50) { const idx = (START[p] + ns) % 52; if (!SAFE.includes(idx)) for (const u of [0, 1]) { const s2 = tok[1 - p][u]; if (s2 >= 0 && s2 <= 50 && (START[1 - p] + s2) % 52 === idx) { tok[1 - p][u] = -1; cap = true; } } }
+    if (ns >= 0 && ns <= 50) { const idx = (START[p] + ns) % 52; if (!SAFE.includes(idx)) for (const u of [0, 1, 2, 3]) { const s2 = tok[1 - p][u]; if (s2 >= 0 && s2 <= 50 && (START[1 - p] + s2) % 52 === idx) { tok[1 - p][u] = -1; cap = true; } } }
     E.s(cap ? 'boom' : ns === 56 ? 'coin' : 'tap'); msg = cap ? 'CAPTURED! 💥' : ''; ph = 'roll'; legal = [];
     const extra = rv === 6 || cap || ns === 56; if (!extra) turn = 1 - turn; check(); };
   const pass = () => { if (rv !== 6) turn = 1 - turn; ph = 'roll'; legal = []; check(); };
-  const aiPick = () => { let b = legal[0], bs = -1; legal.forEach(t => { const s = tok[turn][t], ns = s < 0 ? 0 : s + rv; let sc = ns - (s < 0 ? -20 : 0) + (s < 0 ? 30 : 0) + (ns === 56 ? 80 : 0); if (ns >= 0 && ns <= 50) { const idx = (START[turn] + ns) % 52; [0, 1].forEach(u => { const s2 = tok[1 - turn][u]; if (s2 >= 0 && s2 <= 50 && (START[1 - turn] + s2) % 52 === idx && !SAFE.includes(idx)) sc += 60; }); } if (sc > bs) { bs = sc; b = t; } }); return b; };
-  const pos = (p, t) => { const [cx, cy] = cell(p, tok[p][t], t); return [cx * C + C / 2, 50 + cy * C + C / 2]; };
+  const aiPick = () => { let b = legal[0], bs = -1; legal.forEach(t => { const s = tok[turn][t], ns = s < 0 ? 0 : s + rv; let sc = ns - (s < 0 ? -20 : 0) + (s < 0 ? 30 : 0) + (ns === 56 ? 80 : 0); if (ns >= 0 && ns <= 50) { const idx = (START[turn] + ns) % 52; [0, 1, 2, 3].forEach(u => { const s2 = tok[1 - turn][u]; if (s2 >= 0 && s2 <= 50 && (START[1 - turn] + s2) % 52 === idx && !SAFE.includes(idx)) sc += 60; }); } if (sc > bs) { bs = sc; b = t; } }); return b; };
+  const pos = (p, t) => { const [cx, cy] = cell(p, tok[p][t], t); const o = tok[p][t] >= 0 && tok[p][t] < 56 ? (t % 2 ? 4 : -4) * (t > 1 ? .6 : 1) : 0; return [cx * C + C / 2 + o, 50 + cy * C + C / 2 + (t > 1 ? 3 : -3) * (tok[p][t] >= 0 && tok[p][t] < 56 ? 1 : 0)]; };
   const pips = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] };
   return {
-    dbg() { return { turn, me, ph, legal: legal.slice(), pos: [0, 1].map(t => pos(me, t)), res }; },
+    dbg() { return { turn, me, ph, legal: legal.slice(), pos: [0, 1, 2, 3].map(t => pos(me, t)), res }; },
     step() { f++; if (anim > 0) anim--; if (endAt && f >= endAt) { endAt = 0; E.fin(res); return; } if (res) return;
       if (ph === 'pass' && --wait <= 0) pass();
       else if (ph === 'roll' && turn !== me && E.solo && f % 50 === 0) roll(1 + E.ri(0, 5));
@@ -985,7 +976,7 @@ reg('ludo', 'Ludo', '🎲', 'Roll the dice, race both tokens home, capture rival
       PATH.forEach(([c, r], i) => { R(g, c * C, r * C, C, C, i === 0 ? COL[0] : i === 26 ? COL[1] : '#fffaf0'); g.strokeStyle = '#8a7a5a'; g.lineWidth = 1; g.strokeRect(c * C + .5, r * C + .5, C - 1, C - 1); if (SAFE.includes(i) && i !== 0 && i !== 26) T(g, '★', c * C + C / 2, r * C + C / 2 + 1, 12, '#c9a227'); });
       HOME.forEach((h, p) => h.forEach(([c, r]) => { R(g, c * C, r * C, C, C, COL[p]); g.strokeStyle = '#8a7a5a'; g.strokeRect(c * C + .5, r * C + .5, C - 1, C - 1); }));
       R(g, 6 * C, 6 * C, 3 * C, 3 * C, '#fff'); g.fillStyle = COL[0]; g.beginPath(); g.moveTo(6 * C, 6 * C); g.lineTo(7.5 * C, 7.5 * C); g.lineTo(6 * C, 9 * C); g.fill(); g.fillStyle = COL[1]; g.beginPath(); g.moveTo(9 * C, 6 * C); g.lineTo(7.5 * C, 7.5 * C); g.lineTo(9 * C, 9 * C); g.fill(); EM(g, '❤️', 7.5 * C, 7.5 * C, 16); g.restore();
-      for (const p of [0, 1]) for (const t of [0, 1]) { const [x, y] = pos(p, t), sel = ph === 'move' && turn === me && p === turn && legal.includes(t);
+      for (const p of [0, 1]) for (const t of [0, 1, 2, 3]) { const [x, y] = pos(p, t), sel = ph === 'move' && turn === me && p === turn && legal.includes(t);
         if (sel) { g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 12 + Math.sin(f * .2) * 2, 0, 7); g.stroke(); }
         Cc(g, x, y, 9, '#000'); Cc(g, x, y, 8, COL[p]); Cc(g, x - 2, y - 3, 3, 'rgba(255,255,255,.55)'); }
       const myT = turn === me;
@@ -1001,7 +992,7 @@ reg('ludo', 'Ludo', '🎲', 'Roll the dice, race both tokens home, capture rival
 });
 
 /* ---------------- CARROM ---------------- */
-reg('carrom', 'Carrom', '🔘', 'Pull back from the striker and release to flick. Pocket all your coins first!', 'duel', 0, E => {
+reg('carrom', 'Carrom', '🔘', 'Drag from the striker toward a coin — longer drag = harder flick. Pocket all your coins first!', 'duel', 0, E => {
   const g = E.g, me = E.first === E.me ? 0 : 1, flip = me === 1, BX = 20, BY = 100, BS = 320, PR = 21, CR = 11, SR = 14, CAP = 10;
   const PK = [[BX + 8, BY + 8], [BX + BS - 8, BY + 8], [BX + 8, BY + BS - 8], [BX + BS - 8, BY + BS - 8]];
   let coins = [{ x: 180, y: 260, vx: 0, vy: 0, c: 'q', a: 1 }]; for (let i = 0; i < 8; i++) coins.push({ x: 180 + Math.cos(i * Math.PI / 4) * 30, y: 260 + Math.sin(i * Math.PI / 4) * 30, vx: 0, vy: 0, c: i % 2 ? 'b' : 'w', a: 1 });
@@ -1041,16 +1032,16 @@ reg('carrom', 'Carrom', '🔘', 'Pull back from the striker and release to flick
       PK.forEach(p => { Cc(g, p[0], p[1], PR, '#111'); });
       coins.forEach(c => { if (!c.a) return; Cc(g, c.x, c.y, CR, '#000'); Cc(g, c.x, c.y, CR - 1.5, c.c === 'w' ? '#fffaf0' : c.c === 'b' ? '#2a2a2a' : '#ff4fa3'); Cc(g, c.x, c.y, 4, c.c === 'w' ? '#d8cfb8' : c.c === 'b' ? '#555' : '#ffb3d6'); });
       if (!str.out) { Cc(g, str.x, str.y, SR, '#000'); Cc(g, str.x, str.y, SR - 2, '#ffd93d'); Cc(g, str.x, str.y, 5, '#c9a000'); }
-      if (drag === 'aim' && pull) { g.strokeStyle = 'rgba(255,79,163,.9)'; g.lineWidth = 3; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x + pull[0] * 2.4, str.y + pull[1] * 2.4); g.stroke(); g.setLineDash([]); g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x - pull[0], str.y - pull[1]); g.stroke(); }
+      if (drag === 'aim' && pull) { const pw = Math.min(1, Math.hypot(pull[0], pull[1]) / 110); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x + pull[0] * 3, str.y + pull[1] * 3); g.stroke(); g.setLineDash([]); g.strokeStyle = `hsl(${120 - pw * 120},90%,55%)`; g.lineWidth = 5; g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x + pull[0], str.y + pull[1]); g.stroke(); }
       g.restore();
-      const my = turn === me; T(g, res ? (res === 'win' ? 'YOU WIN!' : res === 'lose' ? 'YOU LOSE' : 'DRAW') : my ? (ph === 'aim' ? 'YOUR SHOT — PULL BACK & RELEASE' : '…') : 'THEIR SHOT…', 180, 20, 9, my ? '#ffd93d' : '#9487b3');
+      const my = turn === me; T(g, res ? (res === 'win' ? 'YOU WIN!' : res === 'lose' ? 'YOU LOSE' : 'DRAW') : my ? (ph === 'aim' ? 'YOUR SHOT — DRAG TOWARD A COIN' : '…') : 'THEIR SHOT…', 180, 20, 9, my ? '#ffd93d' : '#9487b3');
       T(g, 'YOU ' + score(me) + '/4  –  ' + score(1 - me) + '/4 THEM', 180, 48, 9, '#fff'); T(g, 'YOU = ' + (me ? 'BLACK' : 'WHITE') + '   SHOT ' + Math.min(shots + 1, CAP) + '/' + CAP, 180, 74, 8, me ? '#aaa' : '#fffaf0');
-      T(g, 'slide on the line to position', 180, 490, 8, '#9487b3'); },
+      T(g, 'slide on the line to move · drag from striker to shoot', 180, 490, 7, '#9487b3'); },
     pd(x0, y0) { if (res || turn !== me || ph !== 'aim') return; const [x, y] = m(x0, y0), by = baseY(turn);
       if (Math.hypot(x - str.x, y - by) < 36) { drag = 'aim'; pull = [0, 0]; } else if (Math.abs(y - by) < 34) { drag = 'place'; str.x = clamp(x, BX + 40, BX + BS - 40); } },
     pm(x0, y0) { if (drag == null) return; const [x, y] = m(x0, y0), by = baseY(turn); if (drag === 'place') str.x = clamp(x, BX + 40, BX + BS - 40);
-      else { let px = str.x - x, py = by - y; const l = Math.hypot(px, py); if (l > 110) { px *= 110 / l; py *= 110 / l; } pull = [px, py]; } },
-    pu() { if (drag === 'aim' && pull && Math.hypot(pull[0], pull[1]) > 14 && ph === 'aim' && turn === me) { const vx = pull[0] * .13, vy = pull[1] * .13; E.send({ k: 'shot', sx: str.x, vx, vy }); shoot(str.x, vx, vy); } drag = null; pull = null; },
+      else { let px = x - str.x, py = y - by; const l = Math.hypot(px, py); if (l > 110) { px *= 110 / l; py *= 110 / l; } pull = [px, py]; } },
+    pu() { if (drag === 'aim' && pull && Math.hypot(pull[0], pull[1]) > 8 && ph === 'aim' && turn === me) { const vx = pull[0] * .14, vy = pull[1] * .14; E.send({ k: 'shot', sx: str.x, vx, vy }); shoot(str.x, vx, vy); } drag = null; pull = null; },
     recv(mm) { if (res) return; if (mm.k === 'shot' && turn !== me) shoot(mm.sx, mm.vx, mm.vy); else if (mm.k === 'end') apply(mm.st, mm.nt, mm.sh, mm.q, mm.r); }
   };
 });
@@ -1376,14 +1367,30 @@ function resolve() {
 H.quit = () => { if (S || L) { toast(NAME[other()] + ' left the game 💔'); goHome(); } };
 H._reset = () => { Object.keys(RDY).forEach(k => delete RDY[k]); if (S && !S.solo || L) { toast(NAME[other()] + ' reconnected — back to home'); goHome(); } };
 
-/* ---- spectate: the partner's canvas arrives as video ---- */
+/* ---- spectate: the partner's canvas arrives as video; partner's camera is a separate floating window ---- */
 function updatePip() {
   const on = !!(S && !S.solo && Net.gotVideo && CUR === 'sPlay');
   $('opw').style.display = on ? 'block' : 'none'; $('opTag').textContent = NAME[other()].toUpperCase() + ' LIVE';
 }
-H._video = updatePip;
-$('opw').onclick = () => $('opw').classList.toggle('big');
-setInterval(updatePip, 1500);
+function updateCamWin() {
+  const on = PartnerCam.on; $('camWin').style.display = on ? 'block' : 'none'; $('camTag').textContent = NAME[other()].toUpperCase() + ' CAM';
+}
+H._video = updatePip; H._camvid = updateCamWin;
+setInterval(updatePip, 1500); setInterval(updateCamWin, 1500);
+[$('camBtn'), $('pCam'), $('mCam')].forEach(b => b && (b.onclick = camToggle));
+
+/* ---- floating windows: small by default, draggable anywhere, tap briefly enlarges them ---- */
+function floatify(el, bigMs = 2600) {
+  let dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0, bigT = 0;
+  const parentRect = () => (el.id === 'opw' ? $('cwrap') : document.body).getBoundingClientRect();
+  const start = e => { dragging = true; moved = false; const p = e.touches ? e.touches[0] : e; sx = p.clientX; sy = p.clientY; const r = el.getBoundingClientRect(), pr = parentRect(); ox = r.left - pr.left; oy = r.top - pr.top; e.preventDefault(); };
+  const move = e => { if (!dragging) return; const p = e.touches ? e.touches[0] : e, dx = p.clientX - sx, dy = p.clientY - sy; if (Math.hypot(dx, dy) > 8) moved = true; if (!moved) return;
+    const pr = parentRect(), r = el.getBoundingClientRect(); let nx = clamp(ox + dx, 0, pr.width - r.width), ny = clamp(oy + dy, 0, pr.height - r.height);
+    el.style.left = nx + 'px'; el.style.top = ny + 'px'; el.style.right = 'auto'; e.preventDefault(); };
+  const end = () => { if (!dragging) return; dragging = false; if (!moved) { clearTimeout(bigT); el.classList.add('big'); bigT = setTimeout(() => el.classList.remove('big'), bigMs); } };
+  el.addEventListener('pointerdown', start); el.addEventListener('pointermove', move); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+floatify($('opw')); floatify($('camWin'));
 
 /* ---- waiting + invites + barrier ---- */
 function showWait(txt, label, fn, delay = 0) {
