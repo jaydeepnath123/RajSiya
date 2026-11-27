@@ -296,7 +296,7 @@ function noise(d = .3) {
 const sfx = n => { try { (SFX[n] || SFX.tap)(); } catch (e) {} };
 
 /* ================= NETWORK: presence + signalling over ntfy, game traffic over WebRTC ================= */
-const Net = { sid: Math.random().toString(36).slice(2, 8), mc: 0, p2p: false, dc: null, pc: null, lastSeen: 0, psid: null, att: null, attAt: 0, queue: [], seen: new Set(), chunks: {}, gotVideo: false };
+const Net = { sid: Math.random().toString(36).slice(2, 8), mc: 0, p2p: false, dc: null, pc: null, lastSeen: 0, psid: null, att: null, attAt: 0, queue: [], seen: new Set(), chunks: {}, gotVideo: false, gotCam: false };
 const H = {};                                     // message handlers by type
 let bc = null;
 function relayRaw(m) {
@@ -341,7 +341,10 @@ function netStart() {
   setInterval(() => { if (Net.p2p) tx({ t: 'ping' }, { p2p: true }); }, 8000);
 }
 /* ---- WebRTC ---- */
-const ICE = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }] };
+const ICE = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }
+] };
 const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8000)); return btoa(s); };
 const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 async function pack(s) {
@@ -353,7 +356,7 @@ async function unpack(s) {
   return decodeURIComponent(escape(atob(s.slice(1))));
 }
 function dropP2P() {
-  Net.p2p = false; Net.gotVideo = false; try { Net.dc && Net.dc.close(); } catch (e) {} try { Net.pc && Net.pc.close(); } catch (e) {}
+  Net.p2p = false; Net.gotVideo = false; Net.gotCam = false; try { Net.dc && Net.dc.close(); } catch (e) {} try { Net.pc && Net.pc.close(); } catch (e) {}
   Net.dc = Net.pc = null; Net.sendScreen = Net.sendCam = Net.sendAudio = null; PartnerCam.on = false; if (H._video) H._video(); if (H._camvid) H._camvid();
 }
 /* three fixed media slots, same order on both ends: 0 = your gameplay screen, 1 = your own camera (off until you turn it on), 2 = music + mic audio */
@@ -385,7 +388,7 @@ function makePC() {
   pc.ontrack = e => {
     const idx = pc.getTransceivers().indexOf(e.transceiver), role = ROLES[idx] || e.track.kind, st = new MediaStream([e.track]);
     if (role === 'screen') { $('opv').srcObject = st; $('opv').play().catch(() => {}); Net.gotVideo = true; if (H._video) H._video(); }
-    else if (role === 'cam') { $('camv').srcObject = st; $('camv').play().catch(() => {}); if (H._camvid) H._camvid(); }
+    else if (role === 'cam') { $('camv').srcObject = st; $('camv').play().catch(() => {}); Net.gotCam = true; if (H._camvid) H._camvid(); }
     else { $('remoteAud').srcObject = st; $('remoteAud').play().catch(() => {}); }
   };
   pc.ondatachannel = e => bindDC(e.channel);
@@ -992,7 +995,7 @@ reg('ludo', 'Ludo', '🎲', 'Roll the dice, race all 4 tokens home, capture riva
 });
 
 /* ---------------- CARROM ---------------- */
-reg('carrom', 'Carrom', '🔘', 'Drag from the striker toward a coin — longer drag = harder flick. Pocket all your coins first!', 'duel', 0, E => {
+reg('carrom', 'Carrom', '🔘', 'Touch the striker and pull back like a slingshot, then let go — it flies the OTHER way. Pocket all your coins first!', 'duel', 0, E => {
   const g = E.g, me = E.first === E.me ? 0 : 1, flip = me === 1, BX = 20, BY = 100, BS = 320, PR = 21, CR = 11, SR = 14, CAP = 10;
   const PK = [[BX + 8, BY + 8], [BX + BS - 8, BY + 8], [BX + 8, BY + BS - 8], [BX + BS - 8, BY + BS - 8]];
   let coins = [{ x: 180, y: 260, vx: 0, vy: 0, c: 'q', a: 1 }]; for (let i = 0; i < 8; i++) coins.push({ x: 180 + Math.cos(i * Math.PI / 4) * 30, y: 260 + Math.sin(i * Math.PI / 4) * 30, vx: 0, vy: 0, c: i % 2 ? 'b' : 'w', a: 1 });
@@ -1034,13 +1037,13 @@ reg('carrom', 'Carrom', '🔘', 'Drag from the striker toward a coin — longer 
       if (!str.out) { Cc(g, str.x, str.y, SR, '#000'); Cc(g, str.x, str.y, SR - 2, '#ffd93d'); Cc(g, str.x, str.y, 5, '#c9a000'); }
       if (drag === 'aim' && pull) { const pw = Math.min(1, Math.hypot(pull[0], pull[1]) / 110); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.setLineDash([6, 6]); g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x + pull[0] * 3, str.y + pull[1] * 3); g.stroke(); g.setLineDash([]); g.strokeStyle = `hsl(${120 - pw * 120},90%,55%)`; g.lineWidth = 5; g.beginPath(); g.moveTo(str.x, str.y); g.lineTo(str.x + pull[0], str.y + pull[1]); g.stroke(); }
       g.restore();
-      const my = turn === me; T(g, res ? (res === 'win' ? 'YOU WIN!' : res === 'lose' ? 'YOU LOSE' : 'DRAW') : my ? (ph === 'aim' ? 'YOUR SHOT — DRAG TOWARD A COIN' : '…') : 'THEIR SHOT…', 180, 20, 9, my ? '#ffd93d' : '#9487b3');
+      const my = turn === me; T(g, res ? (res === 'win' ? 'YOU WIN!' : res === 'lose' ? 'YOU LOSE' : 'DRAW') : my ? (ph === 'aim' ? 'YOUR SHOT — PULL BACK & RELEASE' : '…') : 'THEIR SHOT…', 180, 20, 9, my ? '#ffd93d' : '#9487b3');
       T(g, 'YOU ' + score(me) + '/4  –  ' + score(1 - me) + '/4 THEM', 180, 48, 9, '#fff'); T(g, 'YOU = ' + (me ? 'BLACK' : 'WHITE') + '   SHOT ' + Math.min(shots + 1, CAP) + '/' + CAP, 180, 74, 8, me ? '#aaa' : '#fffaf0');
-      T(g, 'slide on the line to move · drag from striker to shoot', 180, 490, 7, '#9487b3'); },
+      T(g, 'slide on the line to move · pull back from striker & release', 180, 490, 7, '#9487b3'); },
     pd(x0, y0) { if (res || turn !== me || ph !== 'aim') return; const [x, y] = m(x0, y0), by = baseY(turn);
       if (Math.hypot(x - str.x, y - by) < 36) { drag = 'aim'; pull = [0, 0]; } else if (Math.abs(y - by) < 34) { drag = 'place'; str.x = clamp(x, BX + 40, BX + BS - 40); } },
     pm(x0, y0) { if (drag == null) return; const [x, y] = m(x0, y0), by = baseY(turn); if (drag === 'place') str.x = clamp(x, BX + 40, BX + BS - 40);
-      else { let px = x - str.x, py = y - by; const l = Math.hypot(px, py); if (l > 110) { px *= 110 / l; py *= 110 / l; } pull = [px, py]; } },
+      else { let px = str.x - x, py = by - y; const l = Math.hypot(px, py); if (l > 110) { px *= 110 / l; py *= 110 / l; } pull = [px, py]; } },
     pu() { if (drag === 'aim' && pull && Math.hypot(pull[0], pull[1]) > 8 && ph === 'aim' && turn === me) { const vx = pull[0] * .14, vy = pull[1] * .14; E.send({ k: 'shot', sx: str.x, vx, vy }); shoot(str.x, vx, vy); } drag = null; pull = null; },
     recv(mm) { if (res) return; if (mm.k === 'shot' && turn !== me) shoot(mm.sx, mm.vx, mm.vy); else if (mm.k === 'end') apply(mm.st, mm.nt, mm.sh, mm.q, mm.r); }
   };
@@ -1051,31 +1054,47 @@ reg('carrom', 'Carrom', '🔘', 'Drag from the striker toward a coin — longer 
 const wrapA = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const drawCar = (g, x, y, a, body, roof, light) => { g.save(); g.translate(x, y); g.rotate(a); R(g, -13, -8, 26, 16, '#000'); R(g, -12, -7, 24, 14, body); R(g, -2, -6, 8, 12, roof); R(g, 8, -6, 3, 12, '#9fe8ff'); if (light) { R(g, -4, -9, 3, 3, light); R(g, -4, 6, 3, 3, light === '#ff3355' ? '#3d7bff' : light); } g.restore(); };
 
-reg('chase', 'Street Chase', '🚓', 'A GTA-style city chase. Drag to steer, grab the cash, outrun the cops!', 'score', 55, E => {
-  const g = E.g, B = []; for (let cx = 0; cx < 3; cx++) for (let cy = 0; cy < 4; cy++) B.push({ x: 40 + cx * 110, y: 40 + cy * 120, w: 70, h: 80, c: ['#5d4fb5', '#b04540', '#3f8080', '#85653f'][(cx + cy) % 4] });
-  const car = { x: 20, y: 260, a: 0 }; let tx = 340, ty = 260, f = 0, bump = 0, cash = [], cops = [], hit = 0, stars = 1;
-  const road = () => E.rnd() < .5 ? { x: [20, 130, 240, 345][E.ri(0, 3)], y: 20 + E.rnd() * 480 } : { x: 20 + E.rnd() * 320, y: [20, 140, 260, 380, 500][E.ri(0, 4)] };
-  const solid = (o, r) => { B.forEach(b => { const cx = clamp(o.x, b.x, b.x + b.w), cy = clamp(o.y, b.y, b.y + b.h), dx = o.x - cx, dy = o.y - cy, d = Math.hypot(dx, dy); if (d < r) { if (d === 0) { o.y -= 4; } else { o.x += dx / d * (r - d); o.y += dy / d * (r - d); } o.bumped = 1; } }); o.x = clamp(o.x, 8, 352); o.y = clamp(o.y, 8, 512); };
-  const spawnCop = () => { const c = [[340, 500], [20, 500], [340, 20], [20, 20]].sort((p, q) => Math.hypot(q[0] - car.x, q[1] - car.y) - Math.hypot(p[0] - car.x, p[1] - car.y))[0]; cops.push({ x: c[0], y: c[1], a: 0 }); };
-  for (let i = 0; i < 3; i++) cash.push(road()); spawnCop();
+reg('chase', 'Street Chase', '🚓', 'An open city to roam. Drag to drive, grab the cash, dodge the cops — the camera follows you anywhere.', 'score', 60, E => {
+  const g = E.g, WW = 1000, WH = 1200, BLK = 130, GAP = 46, B = [], parks = [];
+  const cols = Math.ceil(WW / BLK), rows = Math.ceil(WH / BLK), COLS = ['#5d4fb5', '#b04540', '#3f8080', '#85653f', '#7a5a2a', '#4a6a8a'];
+  for (let cx = 0; cx < cols; cx++) for (let cy = 0; cy < rows; cy++) {
+    if (cx <= 1 && cy <= 1) continue;                                   // keep the spawn corner clear
+    if ((cx === 3 && cy === 2) || (cx === cols - 3 && cy === rows - 3)) { parks.push({ x: cx * BLK + GAP / 2, y: cy * BLK + GAP / 2, w: BLK - GAP, h: BLK - GAP }); continue; }
+    if (E.rnd() < .8) { const bw = BLK - GAP - E.rnd() * 18, bh = BLK - GAP - E.rnd() * 18; B.push({ x: cx * BLK + GAP / 2 + E.rnd() * 8, y: cy * BLK + GAP / 2 + E.rnd() * 8, w: bw, h: bh, c: COLS[Math.floor(E.rnd() * COLS.length)] }); }
+  }
+  const car = { x: 90, y: 90, a: 0 }; let tx = 200, ty = 90, f = 0, bump = 0, cash = [], cops = [], hit = 0, stars = 1, camX = 0, camY = 0;
+  const free = (x, y, pad) => !B.some(b => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad) && x > 10 && x < WW - 10 && y > 10 && y < WH - 10;
+  const road = () => { for (let k = 0; k < 40; k++) { const x = 20 + E.rnd() * (WW - 40), y = 20 + E.rnd() * (WH - 40); if (free(x, y, 14)) return { x, y }; } return { x: 90, y: 90 }; };
+  const solid = (o, r) => { B.forEach(b => { const cx = clamp(o.x, b.x, b.x + b.w), cy = clamp(o.y, b.y, b.y + b.h), dx = o.x - cx, dy = o.y - cy, d = Math.hypot(dx, dy); if (d < r) { if (d === 0) { o.y -= 4; } else { o.x += dx / d * (r - d); o.y += dy / d * (r - d); } o.bumped = 1; } }); o.x = clamp(o.x, 8, WW - 8); o.y = clamp(o.y, 8, WH - 8); };
+  const spawnCop = () => { const corners = [[60, 60], [WW - 60, 60], [60, WH - 60], [WW - 60, WH - 60]].sort((p, q) => Math.hypot(q[0] - car.x, q[1] - car.y) - Math.hypot(p[0] - car.x, p[1] - car.y)); cops.push({ x: corners[0][0], y: corners[0][1], a: 0 }); };
+  for (let i = 0; i < 4; i++) cash.push(road()); spawnCop();
   return {
     step() {
       f++; if (hit) { if (--hit === 0) E.over(); return; } stars = Math.min(4, 1 + Math.floor(f / 660)); while (cops.length < stars) { spawnCop(); E.s('bad'); }
-      const want = Math.atan2(ty - car.y, tx - car.x); car.a += clamp(wrapA(want - car.a), -.085, .085); const sp = bump > 0 ? 1.4 : 3.3; bump = Math.max(0, bump - 1);
+      const want = Math.atan2(ty - car.y, tx - car.x); car.a += clamp(wrapA(want - car.a), -.085, .085); const sp = bump > 0 ? 1.4 : 3.6; bump = Math.max(0, bump - 1);
       car.x += Math.cos(car.a) * sp; car.y += Math.sin(car.a) * sp; car.bumped = 0; solid(car, 9); if (car.bumped) { if (!bump) E.s('blip'); bump = 10; }
+      camX = clamp(car.x - 180, 0, WW - 360); camY = clamp(car.y - 260, 0, WH - 520);
       cops.forEach(c => { c.a += clamp(wrapA(Math.atan2(car.y - c.y, car.x - c.x) - c.a), -.05, .05); const s = 2 + stars * .2; c.x += Math.cos(c.a) * s; c.y += Math.sin(c.a) * s; solid(c, 9); if (Math.hypot(c.x - car.x, c.y - car.y) < 17) { hit = 40; E.s('boom'); } });
       cash = cash.filter(c => { if (Math.hypot(c.x - car.x, c.y - car.y) < 17) { E.add(10); E.s('coin'); cash.push(road()); return false; } return true; });
       if (f % 60 === 0) E.add(1);
     },
     draw() {
-      R(g, 0, 0, 360, 520, '#3b3b46'); for (let i = 0; i < 4; i++) { for (let y = 0; y < 520; y += 30) R(g, 19 + i * 110, y, 2, 14, '#caa72a'); } for (let j = 0; j < 5; j++) for (let x = 0; x < 360; x += 30) R(g, x, 19 + j * 120, 14, 2, '#caa72a');
-      B.forEach(b => { R(g, b.x, b.y, b.w, b.h, '#222'); R(g, b.x + 3, b.y + 3, b.w - 6, b.h - 6, b.c); for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) R(g, b.x + 10 + i * 20, b.y + 10 + j * 18, 8, 8, 'rgba(255,240,150,.7)'); });
-      cash.forEach(c => EM(g, '💵', c.x, c.y, 22)); cops.forEach(c => drawCar(g, c.x, c.y, c.a, '#f5f5f5', '#222', f % 20 < 10 ? '#ff3355' : '#3d7bff')); if (hit) EM(g, '💥', car.x, car.y, 46); else drawCar(g, car.x, car.y, car.a, '#ff9a1f', '#7a3d00');
-      T(g, '⭐'.repeat(stars), 180, 30, 14); },
-    pd(x, y) { tx = x; ty = y; }, pm(x, y) { tx = x; ty = y; }
+      g.save(); g.translate(-camX, -camY);
+      R(g, camX - 4, camY - 4, 368, 528, '#3b3b46');
+      for (let gx = 0; gx < cols; gx++) R(g, gx * BLK + 14, camY - 4, 18, 528, '#44475a');
+      for (let gy = 0; gy < rows; gy++) R(g, camX - 4, gy * BLK + 14, 368, 18, '#44475a');
+      parks.forEach(p => { R(g, p.x, p.y, p.w, p.h, '#2f6a2a'); for (let i = 0; i < 4; i++) EM(g, '🌳', p.x + 16 + (i % 2) * (p.w - 32), p.y + 16 + Math.floor(i / 2) * (p.h - 32), 22); });
+      B.forEach(b => { R(g, b.x, b.y, b.w, b.h, '#222'); R(g, b.x + 3, b.y + 3, b.w - 6, b.h - 6, b.c); for (let i = 0; i < 2; i++) for (let j = 0; j < 3; j++) R(g, b.x + 8 + i * (b.w - 24), b.y + 8 + j * 16, 7, 7, 'rgba(255,240,150,.7)'); });
+      cash.forEach(c => EM(g, '💵', c.x, c.y, 22)); cops.forEach(c => drawCar(g, c.x, c.y, c.a, '#f5f5f5', '#222', f % 20 < 10 ? '#ff3355' : '#3d7bff'));
+      if (hit) EM(g, '💥', car.x, car.y, 46); else drawCar(g, car.x, car.y, car.a, '#ff9a1f', '#7a3d00');
+      g.restore();
+      T(g, '⭐'.repeat(stars), 180, 30, 14);
+      R(g, 258, 44, 96, 76, 'rgba(10,10,20,.72)'); g.strokeStyle = '#ffd93d'; g.lineWidth = 1; g.strokeRect(258, 44, 96, 76);
+      const mx = v => 258 + v / WW * 96, my = v => 44 + v / WH * 76; Cc(g, mx(car.x), my(car.y), 3, '#ff9a1f'); cops.forEach(c => Cc(g, mx(c.x), my(c.y), 2.4, '#ff3355')); cash.forEach(c => Cc(g, mx(c.x), my(c.y), 1.6, '#3ddc84'));
+    },
+    pd(x, y) { tx = x + camX; ty = y + camY; }, pm(x, y) { tx = x + camX; ty = y + camY; }
   };
 });
-
 reg('pacman', 'Pac-Man', '🟡', 'Eat every dot, dodge the ghosts — a power pellet lets you hunt them!', 'score', 60, E => {
   const g = E.g, CS = 24, OY = 80, MAP = ['###############', '#o.....#.....o#', '#.###.#.#.###.#', '#.............#', '#.###.#.#.###.#', '#.....#.#.....#', '###.#.....#.###', '#.....###.....#', '###.#.....#.###', '#.....#.#.....#', '#.###.#.#.###.#', '#.............#', '#.###.#.#.###.#', '#o.....#.....o#', '###############'];
   let grid, left, pac, gh, lives = 3, fr = 0, f = 0, pause = 0, sx = 0, sy = 0, dead = 0;
@@ -1373,7 +1392,8 @@ function updatePip() {
   $('opw').style.display = on ? 'block' : 'none'; $('opTag').textContent = NAME[other()].toUpperCase() + ' LIVE';
 }
 function updateCamWin() {
-  const on = PartnerCam.on; $('camWin').style.display = on ? 'block' : 'none'; $('camTag').textContent = NAME[other()].toUpperCase() + ' CAM';
+  const on = PartnerCam.on; $('camWin').style.display = on ? 'block' : 'none';
+  $('camTag').textContent = !on ? '' : Net.gotCam ? NAME[other()].toUpperCase() + ' CAM • LIVE' : NAME[other()].toUpperCase() + ' — CONNECTING…';
 }
 H._video = updatePip; H._camvid = updateCamWin;
 setInterval(updatePip, 1500); setInterval(updateCamWin, 1500);
